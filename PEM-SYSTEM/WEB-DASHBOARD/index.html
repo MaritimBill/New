@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏭 PEM Electrolyzer - Industrial Control</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Industrial Header -->
+        <header class="industrial-header">
+            <div class="header-content">
+                <h1>🏭 PEM ELECTROLYZER CONTROL SYSTEM</h1>
+                <div class="system-info">
+                    <span class="info-item">⚡ DUAL POWER SOURCE</span>
+                    <span class="info-item">🌐 3-WAY MQTT</span>
+                    <span class="info-item">🧠 HENMPC AI</span>
+                    <span class="info-item">🇰🇪 KENYA CONTEXT</span>
+                </div>
+            </div>
+            <div class="connection-status">
+                <div class="status-item">
+                    <div class="status-lamp" id="mqttLamp"></div>
+                    <span>MQTT</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-lamp" id="matlabLamp"></div>
+                    <span>MATLAB</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-lamp" id="arduinoLamp"></div>
+                    <span>ARDUINO</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-lamp" id="webLamp"></div>
+                    <span>WEB DASH</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Grid Layout -->
+        <div class="main-grid">
+            <!-- Control Panel -->
+            <div class="industrial-panel control-panel">
+                <div class="panel-header">
+                    <h2>🎛️ CONTROL PANEL</h2>
+                    <div class="panel-actions">
+                        <button class="btn btn-success" id="startBtn">▶️ START</button>
+                        <button class="btn btn-danger" id="stopBtn" disabled>⏹️ STOP</button>
+                        <button class="btn btn-primary" id="connectBtn">📡 CONNECT MQTT</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>PRODUCTION RATE: <span id="currentValue" class="value-display">80 A</span></label>
+                    <input type="range" id="currentSlider" min="50" max="150" value="80" class="industrial-slider">
+                </div>
+
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="label">STATUS:</span>
+                        <span id="statusDisplay" class="value">READY</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">VOLTAGE:</span>
+                        <span id="voltageDisplay" class="value">1.8 V</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">POWER:</span>
+                        <span id="powerDisplay" class="value">144 W</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="label">EFFICIENCY:</span>
+                        <span id="efficiencyDisplay" class="value">85%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MPC Controller -->
+            <div class="industrial-panel mpc-panel">
+                <div class="panel-header">
+                    <h2>🧠 HENMPC CONTROLLER</h2>
+                    <div class="mpc-status" id="mpcStatus">OPTIMIZING</div>
+                </div>
+                
+                <div class="mpc-strategies">
+                    <button class="strategy-btn active" data-strategy="economic">💰 ECONOMIC</button>
+                    <button class="strategy-btn" data-strategy="reliability">🛡️ RELIABILITY</button>
+                    <button class="strategy-btn" data-strategy="efficiency">⚡ EFFICIENCY</button>
+                </div>
+
+                <div class="mpc-params">
+                    <div class="param-group">
+                        <label>Population Size: <span id="popSize">50</span></label>
+                        <input type="range" id="populationSlider" min="20" max="100" value="50" class="industrial-slider">
+                    </div>
+                    <div class="param-group">
+                        <label>Mutation Rate: <span id="mutationRate">0.1</span></label>
+                        <input type="range" id="mutationSlider" min="0.01" max="0.5" step="0.01" value="0.1" class="industrial-slider">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kenya Context -->
+            <div class="industrial-panel kenya-panel">
+                <div class="panel-header">
+                    <h2>🇰🇪 KENYA CONTEXT</h2>
+                </div>
+                <div class="kenya-data">
+                    <div class="data-item">
+                        <span class="label">🏥 Hospital O₂ Demand:</span>
+                        <span id="hospitalDemand" class="value">-- L/min</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">⚡ KPLC Tariff:</span>
+                        <span id="currentTariff" class="value">-- KSh/kWh</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">☀️ Solar Generation:</span>
+                        <span id="solarPower" class="value">-- kW</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">🏭 Grid Status:</span>
+                        <span id="gridStatus" class="value">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Power Control -->
+            <div class="industrial-panel power-panel">
+                <div class="panel-header">
+                    <h2>⚡ DUAL POWER CONTROL</h2>
+                </div>
+                
+                <div class="power-source">
+                    <label>POWER SOURCE:</label>
+                    <select id="powerSourceDropdown" class="industrial-select">
+                        <option value="auto">🔄 AUTO MPC</option>
+                        <option value="grid">🏭 GRID ONLY</option>
+                        <option value="pv">☀️ PV ONLY</option>
+                        <option value="mixed">🔀 MIXED</option>
+                    </select>
+                </div>
+
+                <div class="power-blending">
+                    <label>GRID/PV BLEND:</label>
+                    <input type="range" id="gridPowerSlider" min="0" max="100" value="50" class="industrial-slider">
+                    <div class="power-labels">
+                        <span id="gridPowerLabel" class="grid-label">GRID: 50%</span>
+                        <span id="pvPowerLabel" class="pv-label">PV: 50%</span>
+                    </div>
+                </div>
+
+                <div class="power-metrics">
+                    <div class="metric">
+                        <span class="label">GRID POWER:</span>
+                        <span id="gridPowerValue" class="value">72 W</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">PV POWER:</span>
+                        <span id="pvPowerValue" class="value">72 W</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="industrial-panel">
+                <h3>📊 PRODUCTION MONITORING</h3>
+                <canvas id="productionChart"></canvas>
+            </div>
+            <div class="industrial-panel">
+                <h3>💰 ECONOMIC OPTIMIZATION</h3>
+                <canvas id="economicChart"></canvas>
+            </div>
+            <div class="industrial-panel">
+                <h3>⚡ POWER DISTRIBUTION</h3>
+                <canvas id="powerChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Performance Comparison -->
+        <div class="industrial-panel performance-panel">
+            <h3>📈 MPC PERFORMANCE COMPARISON</h3>
+            <div class="performance-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>MPC TYPE</th>
+                            <th>COST (KSh/h)</th>
+                            <th>O₂ PRODUCTION</th>
+                            <th>EFFICIENCY</th>
+                            <th>STABILITY</th>
+                            <th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="performanceBody">
+                        <!-- Filled by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- System Log -->
+        <div class="industrial-panel log-panel">
+            <h3>📝 SYSTEM LOG & MPC DECISIONS</h3>
+            <div class="log-container" id="systemLog">
+                <div class="log-entry info">🏭 SYSTEM INITIALIZED - READY FOR OPERATION</div>
+                <div class="log-entry info">🌐 MQTT: Waiting for connection...</div>
+                <div class="log-entry info">⚡ POWER: Dual-source system ready</div>
+                <div class="log-entry info">🧠 HENMPC: Economic optimization available</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="kenya-data.js"></script>
+    <script src="henmpc-controller.js"></script>
+    <script src="mpc-controller.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
